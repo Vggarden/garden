@@ -1,0 +1,3845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>山东菜园管理助手 · 鲁中篇</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #2d6a4f;
+      --primary-light: #40916c;
+      --accent: #d8f3dc;
+      --bg: #f6fff8;
+      --card: #ffffff;
+      --text: #1b4332;
+      --muted: #52796f;
+      --border: #b7e4c7;
+      --shadow: 0 4px 12px rgba(45, 106, 79, 0.08);
+      --timeline: #95d5b2;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      padding: 32px 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.8rem; margin-bottom: 8px; }
+    header p { opacity: 0.9; font-size: 0.95rem; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+    .climate-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: var(--shadow);
+      border-left: 5px solid var(--primary-light);
+    }
+    .climate-card h2 { font-size: 1.15rem; margin-bottom: 10px; color: var(--primary); }
+    .climate-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .climate-item {
+      background: var(--accent);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .climate-item strong { display: block; color: var(--primary); font-size: 0.9rem; }
+    .climate-item span { font-size: 0.85rem; color: var(--muted); }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 24px 0 16px;
+    }
+    .controls input, .controls select {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      background: var(--card);
+      color: var(--text);
+      outline: none;
+    }
+    .controls input { flex: 1; min-width: 180px; }
+    .controls select { min-width: 120px; }
+    .month-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 4px 0 12px;
+      margin-bottom: 8px;
+    }
+    .month-tab {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .month-tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .section-title {
+      font-size: 1.2rem;
+      color: var(--primary);
+      margin: 28px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .vegetable-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .veg-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid transparent;
+    }
+    .veg-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(45, 106, 79, 0.12);
+      border-color: var(--border);
+    }
+    .veg-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .veg-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+    }
+    .veg-name { font-size: 1.15rem; font-weight: 600; }
+    .veg-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .tag {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #e9f5db;
+      color: var(--primary);
+    }
+    .veg-months {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .empty {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--card);
+      border-radius: 20px;
+      max-width: 760px;
+      width: 100%;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 24px;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: var(--primary);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .modal h2 {
+      font-size: 1.4rem;
+      color: var(--primary);
+      margin-bottom: 12px;
+      padding-right: 40px;
+    }
+    .modal-summary {
+      background: var(--accent);
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+    .info-block {
+      margin-bottom: 20px;
+    }
+    .info-block h3 {
+      font-size: 1rem;
+      color: var(--primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .info-block p, .info-block ul {
+      font-size: 0.92rem;
+      color: var(--text);
+      padding-left: 4px;
+    }
+    .info-block ul { padding-left: 20px; }
+    .info-block li { margin-bottom: 6px; }
+    .modal-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .modal-meta div {
+      background: var(--accent);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+    }
+    .modal-meta strong { display: block; color: var(--primary); }
+
+    .timeline {
+      position: relative;
+      padding-left: 24px;
+      margin-top: 8px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 6px;
+      bottom: 6px;
+      width: 2px;
+      background: var(--timeline);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -21px;
+      top: 6px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      border: 2px solid white;
+      box-shadow: 0 0 0 1px var(--timeline);
+    }
+    .timeline-time {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+    }
+    .timeline-action {
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .mgmt-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 6px;
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+    .mgmt-table th, .mgmt-table td {
+      text-align: left;
+      padding: 9px 10px;
+      vertical-align: top;
+    }
+    .mgmt-table th {
+      width: 86px;
+      color: var(--primary);
+      background: var(--accent);
+      border-radius: 6px 0 0 6px;
+      white-space: nowrap;
+    }
+    .mgmt-table td {
+      background: #f9fffc;
+      border-radius: 0 6px 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.5rem; }
+      .vegetable-grid { grid-template-columns: 1fr; }
+      .controls input, .controls select { width: 100%; }
+      .modal { padding: 18px; }
+      .mgmt-table th { width: 70px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌱 山东菜园管理助手</h1>
+    <p>适配鲁中地区（济南、泰安周边）气候 · 蔬菜 + 果树 · 节气 · 精细步骤</p>
+  </header>
+
+  <div class="container">
+    <div class="climate-card">
+      <h2>📍 鲁中气候与节气参考</h2>
+      <p>鲁中地区四季分明，春季回暖快但多倒春寒，夏季高温多雨，秋季凉爽短暂，冬季寒冷干燥。无霜期约 180–200 天，终霜一般在 3 月底至 4 月初，初霜多在 10 月下旬至 11 月初。以下按节气给出主要农事窗口：</p>
+      <div class="climate-grid">
+        <div class="climate-item"><strong>惊蛰–春分</strong><span>3月上中旬<br>温室育苗开始</span></div>
+        <div class="climate-item"><strong>清明–谷雨</strong><span>4月上中旬<br>露地定植高峰</span></div>
+        <div class="climate-item"><strong>立夏–小满</strong><span>5月上中旬<br>春播收尾、夏管开始</span></div>
+        <div class="climate-item"><strong>立秋–处暑</strong><span>8月上中旬<br>秋播准备、茄果补种</span></div>
+        <div class="climate-item"><strong>白露–寒露</strong><span>9月上中旬<br>秋菜定植、大蒜大葱播种</span></div>
+        <div class="climate-item"><strong>霜降–立冬</strong><span>10月下旬<br>收获冬储、果树施基肥</span></div>
+      </div>
+    </div>
+
+    <div class="month-tabs" id="monthTabs"></div>
+
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="🔍 搜索菜名或果树，如：番茄、西瓜、苹果">
+      <select id="categorySelect">
+        <option value="all">全部类型</option>
+        <option value="leaf">叶菜类</option>
+        <option value="fruit">瓜果类</option>
+        <option value="root">根茎类</option>
+        <option value="bean">豆类</option>
+        <option value="tree">果树类</option>
+        <option value="herb">香草调味</option>
+        <option value="other">其他</option>
+      </select>
+      <select id="actionSelect">
+        <option value="all">全部月份</option>
+        <option value="sow">适宜播种</option>
+        <option value="transplant">适宜移栽/定植</option>
+        <option value="harvest">适宜采收</option>
+      </select>
+    </div>
+
+    <div class="section-title" id="listTitle">📅 全部作物</div>
+    <div class="vegetable-grid" id="vegetableGrid"></div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">×</button>
+      <h2 id="modalTitle"></h2>
+      <div class="modal-summary" id="modalSummary"></div>
+      <div class="modal-meta" id="modalMeta"></div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const vegetables = [
+  {
+    "id": "tomato",
+    "name": "番茄",
+    "category": "fruit",
+    "icon": "🍅",
+    "sowMonths": [
+      2,
+      3
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、微酸性",
+    "timing": "鲁中宜惊蛰后温室育苗，谷雨前后终霜后定植，夏秋采收。",
+    "steps": [
+      {
+        "time": "2月下旬–3月上旬（雨水–惊蛰前后）",
+        "action": "温室或阳台育苗。种子用 50–55℃ 温水浸种 15 分钟，再常温浸种 4–6 小时，沥干后播于营养钵或育苗盘，覆土 0.8–1 厘米，保持 22–28℃。"
+      },
+      {
+        "time": "3月中旬（春分前后）",
+        "action": "幼苗出土后保持白天 20–25℃、夜间 12–15℃。子叶展开后适当降低夜温防徒长。"
+      },
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "2 片真叶时第一次间苗，每钵留 1 株健壮苗；4–5 片真叶时分苗到 10×10 厘米营养钵。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏前后）",
+        "action": "终霜结束、地温稳定 15℃ 以上时定植。定植前 7–10 天开始炼苗。"
+      },
+      {
+        "time": "6月–9月",
+        "action": "第一穗果坐住后及时追肥浇水，成熟后分批采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时第一次间苗；4–5 片真叶时定苗或分苗。",
+      "transplant": "苗龄 45–55 天，株高 15–20 厘米，6–7 片真叶，茎粗 0.5 厘米以上时定植。",
+      "spacing": "大行距 70 厘米，小行距 45 厘米，株距 30–35 厘米；单干整枝每亩约 3000 株。",
+      "watering": "定植浇透定植水；缓苗后控水蹲苗；第一穗果核桃大小时恢复浇水，保持土壤见干见湿。",
+      "fertilizing": "底肥亩施腐熟有机肥 3000–4000 公斤、复合肥 30 公斤；第一穗果膨大期追施高钾复合肥 15–20 公斤，之后每 15–20 天一次。",
+      "pruning": "单干整枝，及时摘除全部侧枝；每穗留 4–6 个果；顶部留 2–3 片叶摘心。",
+      "others": "开花期可用 15–20 毫克/升 2,4-D 或番茄灵蘸花保果；及时搭架或吊蔓。"
+    },
+    "pests": "早疫病、晚疫病、叶霉病、病毒病、蚜虫、白粉虱、棉铃虫。注意轮作，及时清除病叶，保持通风透光。"
+  },
+  {
+    "id": "cucumber",
+    "name": "黄瓜",
+    "category": "fruit",
+    "icon": "🥒",
+    "sowMonths": [
+      3,
+      4,
+      7,
+      8
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      8
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "较多",
+    "soil": "肥沃、保水保肥",
+    "timing": "春黄瓜 3 月下旬至 4 月育苗或直播，秋黄瓜 7 月下旬至 8 月初直播。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春黄瓜直播或育苗。种子常温浸种 4–6 小时后播于穴盘，覆土 1.5 厘米；直播按穴距 25–30 厘米，每穴 3–4 粒。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "直播苗 2 片真叶时间苗，每穴留 2 株；3–4 片真叶时定苗，每穴留 1 株。育苗苗龄 25–30 天、3 叶 1 心时定植。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "终霜后定植，定植后浇透水，覆盖地膜保温保墒。"
+      },
+      {
+        "time": "7月下旬–8月初（立秋前后）",
+        "action": "秋黄瓜直播。选择耐热、抗病品种，播后遮阴降温，3 片真叶定苗。"
+      },
+      {
+        "time": "5月–10月",
+        "action": "根瓜坐住后及时采收，盛果期每天或隔天采收一次。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每穴留 2 株；3–4 片真叶时定苗，每穴留 1 株。",
+      "transplant": "苗龄 25–30 天，3 叶 1 心，株高 10–12 厘米时定植。",
+      "spacing": "行距 60–70 厘米，株距 25–30 厘米；搭架栽培株距可加密至 20 厘米。",
+      "watering": "苗期适当控水；根瓜坐住后加大浇水量，保持土壤湿润；采收前 3–5 天控水提高品质。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 25 公斤；根瓜期追施复合肥 10 公斤，盛瓜期每 7–10 天追施一次。",
+      "pruning": "主蔓 5–6 节以下侧枝全部摘除；中上部侧枝见瓜后留 1–2 叶摘心。",
+      "others": "及时引蔓上架，摘除卷须、病老叶；根瓜及早采收。"
+    },
+    "pests": "霜霉病、白粉病、角斑病、蚜虫、瓜绢螟、潜叶蝇。高畦栽培，降低湿度，及时用药。"
+  },
+  {
+    "id": "eggplant",
+    "name": "茄子",
+    "category": "fruit",
+    "icon": "🍆",
+    "sowMonths": [
+      1,
+      2,
+      3
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "深厚肥沃、排水良好",
+    "timing": "1–2 月温室育苗，4 月下旬至 5 月初终霜后定植，夏秋采收。",
+    "steps": [
+      {
+        "time": "1月下旬–2月中旬（大寒–雨水前后）",
+        "action": "温室育苗。种子用 55℃ 温水烫种 15 分钟，再浸种 8–10 小时，置于 25–30℃ 催芽后播种。"
+      },
+      {
+        "time": "2月下旬–3月上旬（雨水–惊蛰）",
+        "action": "出苗后保持白天 25–28℃、夜间 15–18℃。2 片真叶时分苗到营养钵。"
+      },
+      {
+        "time": "3月中旬–4月上旬（春分–清明）",
+        "action": "苗期注意控水防徒长；定植前 7–10 天炼苗，逐渐降低温度至 15℃ 左右。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏前后）",
+        "action": "终霜后、地温 15℃ 以上定植。定植深度以子叶露出土面为宜。"
+      },
+      {
+        "time": "6月–10月",
+        "action": "门茄坐住后及时浇水追肥；果实皮色发亮时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，4–5 片真叶时分苗，每钵 1 株。",
+      "transplant": "苗龄 70–90 天，株高 20 厘米左右，7–9 片真叶时定植。",
+      "spacing": "行距 60–70 厘米，株距 40–45 厘米，亩栽 2200–2500 株。",
+      "watering": "定植浇透水；门茄坐住前控水蹲苗；对茄膨大后保持土壤湿润。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；门茄膨大期追施尿素 10 公斤 + 硫酸钾 10 公斤。",
+      "pruning": "双干整枝：门茄下保留 2 个侧枝，其余侧枝摘除；及时摘老叶、病叶。",
+      "others": "可用番茄灵蘸花提高坐果率；高温期适当遮阴。"
+    },
+    "pests": "黄萎病、青枯病、绵疫病、蚜虫、红蜘蛛、茶黄螨。避免连作，与葱蒜类轮作。"
+  },
+  {
+    "id": "pepper",
+    "name": "辣椒",
+    "category": "fruit",
+    "icon": "🌶️",
+    "sowMonths": [
+      1,
+      2,
+      3
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、微酸性",
+    "timing": "1–2 月温室育苗，5 月初终霜后定植，结果期可延续至初冬。",
+    "steps": [
+      {
+        "time": "1月下旬–2月中旬（大寒–雨水前后）",
+        "action": "温室育苗。种子 55℃ 温水烫种 15 分钟，浸种 6–8 小时，28–30℃ 催芽后播种。"
+      },
+      {
+        "time": "2月下旬–3月上旬（雨水–惊蛰）",
+        "action": "出苗后白天 25–28℃、夜间 15–18℃；2 叶 1 心时分苗。"
+      },
+      {
+        "time": "3月中旬–4月中旬（春分–谷雨）",
+        "action": "苗期注意防寒，夜温不低于 12℃；定植前 10 天炼苗。"
+      },
+      {
+        "time": "5月上旬（立夏前后）",
+        "action": "终霜后定植。定植时带土坨，深度以子叶露出土面为准。"
+      },
+      {
+        "time": "6月–11月",
+        "action": "门椒坐住后浇水追肥；果实充分膨大、色泽鲜绿时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，4–5 片真叶时定苗或分苗。",
+      "transplant": "苗龄 60–70 天，8–10 片真叶，株高 15–18 厘米时定植。",
+      "spacing": "行距 50–60 厘米，株距 30–35 厘米，亩栽 3500–4000 株。",
+      "watering": "定植浇透水；门椒坐住前控水蹲苗；结果期保持土壤湿润，忌大水漫灌。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 25 公斤；门椒膨大期追施复合肥 15 公斤，盛果期每 10–15 天一次。",
+      "pruning": "及时摘除门椒以下侧枝；生长中后期摘除老叶、病叶改善通风。",
+      "others": "高温季节覆盖遮阳网；及时防治蚜虫减少病毒病传播。"
+    },
+    "pests": "病毒病、疫病、炭疽病、蚜虫、烟青虫、茶黄螨。重点防蚜虫。"
+  },
+  {
+    "id": "zucchini",
+    "name": "西葫芦",
+    "category": "fruit",
+    "icon": "🥒",
+    "sowMonths": [
+      3,
+      4,
+      8
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      8
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      7,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "肥沃疏松",
+    "timing": "春播 3 月下旬至 4 月直播或育苗，秋播 8 月初直播。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "直播或育苗。种子浸种 4 小时后播于穴盘，覆土 2 厘米；直播按株距 50 厘米，每穴 2–3 粒。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "直播苗 2 片真叶时间苗，每穴留 2 株；4 片真叶定苗，每穴留 1 株。育苗苗 3 叶 1 心时定植。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "终霜后定植，浇透水。可覆盖地膜提高地温。"
+      },
+      {
+        "time": "8月初（立秋前后）",
+        "action": "秋播直播。选择耐热抗病品种，播后遮阴。3 片真叶定苗。"
+      },
+      {
+        "time": "5月–10月",
+        "action": "根瓜及早采收，盛瓜期每 2–3 天采收一次。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每穴留 2 株；4 片真叶时定苗，每穴留 1 株。",
+      "transplant": "苗龄 25–30 天，3 叶 1 心时定植。",
+      "spacing": "行距 80–100 厘米，株距 50–60 厘米，亩栽 1200–1500 株。",
+      "watering": "定植浇透水；缓苗后控水；根瓜坐住后保持土壤湿润。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；结瓜期追施复合肥 15 公斤。",
+      "pruning": "及时摘除老叶、病叶；生长过旺时可摘心促发侧枝。",
+      "others": "开花期上午进行人工授粉提高坐果率；根瓜长 10 厘米时及时采收。"
+    },
+    "pests": "白粉病、灰霉病、病毒病、蚜虫、白粉虱。注意通风透光，避免偏施氮肥。"
+  },
+  {
+    "id": "pumpkin",
+    "name": "南瓜",
+    "category": "fruit",
+    "icon": "🎃",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "肥沃疏松",
+    "timing": "春播 3 月下旬至 4 月直播或育苗，谷雨前后定植，夏末秋初采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "直播或育苗。种子浸种 4–6 小时后播种，覆土 2–3 厘米；直播按穴距 60–80 厘米，每穴 2–3 粒。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "2 片真叶时间苗，每穴留 2 株；4–5 片真叶定苗，每穴留 1 株。育苗苗 3–4 叶时定植。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "终霜后定植，浇透水；爬地栽培或搭架。"
+      },
+      {
+        "time": "6月上旬（芒种前后）",
+        "action": "伸蔓期引蔓、压蔓，摘除多余侧蔓。"
+      },
+      {
+        "time": "7月–10月",
+        "action": "果皮变硬、果柄木质化时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每穴留 2 株；4–5 片真叶定苗，每穴留 1 株。",
+      "transplant": "苗龄 25–30 天，3–4 片真叶时定植。",
+      "spacing": "行距 1.5–2 米，株距 0.6–0.8 米。",
+      "watering": "定植浇透水；伸蔓前控水；果实膨大期保持土壤湿润，采收前 7 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000–4000 公斤、复合肥 30 公斤；伸蔓期追施氮肥，膨大期追施钾肥。",
+      "pruning": "主蔓 5–7 节摘心，选留 2–3 条健壮侧蔓；及时摘除老叶、病叶。",
+      "others": "南瓜可爬地栽培，也可搭架节省空间；注意人工授粉。"
+    },
+    "pests": "白粉病、病毒病、蚜虫、瓜绢螟、红蜘蛛。"
+  },
+  {
+    "id": "wintermelon",
+    "name": "冬瓜",
+    "category": "fruit",
+    "icon": "🍈",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      7,
+      8,
+      9
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "较多",
+    "soil": "深厚肥沃",
+    "timing": "3 月下旬至 4 月育苗，5 月初定植，7–9 月采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "育苗。种子浸种 6–8 小时，30℃ 催芽后播于营养钵，覆土 1.5 厘米。"
+      },
+      {
+        "time": "4月中旬–下旬（谷雨前后）",
+        "action": "2 片真叶时间苗，每钵留 1 株；苗龄 30–35 天、4–5 叶时定植。"
+      },
+      {
+        "time": "5月上旬（立夏前后）",
+        "action": "终霜后定植，浇透水，覆盖地膜。"
+      },
+      {
+        "time": "6月",
+        "action": "引蔓上架，留主蔓，摘除侧蔓。"
+      },
+      {
+        "time": "7月–9月",
+        "action": "果实定型后垫草，成熟后采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每钵留 1 株。",
+      "transplant": "苗龄 30–35 天，4–5 片真叶时定植。",
+      "spacing": "行距 1.8–2 米，株距 0.6–0.8 米，搭架栽培。",
+      "watering": "苗期控水；抽蔓后增加浇水；果实膨大期保持充足水分。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；坐瓜后追施复合肥 2–3 次。",
+      "pruning": "单蔓整枝，主蔓 20 节前后留瓜；及时摘心。",
+      "others": "选留 1–2 个健壮瓜，其余疏除；高温期遮阴防日灼。"
+    },
+    "pests": "白粉病、疫病、炭疽病、蚜虫、瓜绢螟。"
+  },
+  {
+    "id": "loofah",
+    "name": "丝瓜",
+    "category": "fruit",
+    "icon": "🥒",
+    "sowMonths": [
+      3,
+      4,
+      7
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      7
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "较多",
+    "soil": "肥沃疏松",
+    "timing": "春丝瓜 3–4 月育苗或直播，秋丝瓜 7 月直播；夏秋采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春播育苗或直播。种子浸种 6–8 小时后播于穴盘，覆土 1.5 厘米；直播每穴 3–4 粒。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "直播苗 2 片真叶时间苗，每穴留 2 株；4 片真叶定苗。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "定植，浇透水，搭架引蔓。"
+      },
+      {
+        "time": "7月上旬（小暑前后）",
+        "action": "秋播直播。选择耐热品种，播后遮阴。"
+      },
+      {
+        "time": "6月–10月",
+        "action": "嫩瓜长 20–30 厘米时及时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每穴留 2 株；4 片真叶定苗，每穴留 1 株。",
+      "transplant": "苗龄 25–30 天，3–4 片真叶时定植。",
+      "spacing": "行距 1.5–1.8 米，株距 0.4–0.5 米，搭架。",
+      "watering": "定植浇透水；抽蔓后保持土壤湿润；盛果期勤浇水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 25 公斤；开花坐果期追施磷钾肥 2–3 次。",
+      "pruning": "主蔓上架后摘心，促发侧蔓；摘除下部老叶、病叶。",
+      "others": "及时引蔓、绑蔓；人工辅助授粉提高坐果率。"
+    },
+    "pests": "霜霉病、白粉病、蚜虫、瓜绢螟、红蜘蛛。"
+  },
+  {
+    "id": "bittermelon",
+    "name": "苦瓜",
+    "category": "fruit",
+    "icon": "🥒",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "肥沃疏松",
+    "timing": "3 月下旬至 4 月育苗，5 月初定植，夏秋采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "育苗。种子浸种 12–24 小时，30℃ 催芽后播种，覆土 1.5 厘米。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "2 片真叶时间苗，每钵留 1 株；苗龄 30–35 天定植。"
+      },
+      {
+        "time": "5月上旬（立夏前后）",
+        "action": "终霜后定植，浇透水，搭架。"
+      },
+      {
+        "time": "6月–9月",
+        "action": "果实瘤状凸起饱满、果色转绿时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每钵留 1 株。",
+      "transplant": "苗龄 30–35 天，4–5 片真叶时定植。",
+      "spacing": "行距 1.2–1.5 米，株距 0.5–0.6 米，搭架。",
+      "watering": "定植浇透水；抽蔓后保持土壤湿润；果实膨大期充足供水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 25 公斤；开花期追施磷肥，膨大期追钾。",
+      "pruning": "主蔓 1 米以下侧蔓摘除；上架后摘心促发侧蔓，侧蔓见瓜后留 2 叶摘心。",
+      "others": "人工授粉可提高坐果；及时采收嫩瓜。"
+    },
+    "pests": "白粉病、炭疽病、瓜实蝇、蚜虫、红蜘蛛。"
+  },
+  {
+    "id": "watermelon",
+    "name": "西瓜",
+    "category": "fruit",
+    "icon": "🍉",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "3 月下旬至 4 月育苗或直播，5 月定植，6–8 月采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "育苗或直播。种子常温浸种 6–8 小时，30℃ 催芽后播于营养钵；直播按穴距 40–50 厘米，每穴 2–3 粒。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "直播苗 2 片真叶时间苗，每穴留 2 株；3 片真叶定苗。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "终霜后定植，浇透水，覆盖地膜。"
+      },
+      {
+        "time": "5月中旬（立夏–小满）",
+        "action": "伸蔓期整枝压蔓，留主蔓和 1–2 条侧蔓。"
+      },
+      {
+        "time": "6月–8月",
+        "action": "瓜柄弯曲、卷须枯萎、敲击声沉闷时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每穴留 2 株；3 片真叶定苗，每穴留 1 株。",
+      "transplant": "苗龄 25–30 天，3–4 片真叶时定植。",
+      "spacing": "行距 1.6–2 米，株距 0.5–0.6 米。",
+      "watering": "定植浇透水；伸蔓期控水；果实膨大期保持充足水分；成熟前 7–10 天控水。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；伸蔓期追施氮肥，膨大期重施钾肥。",
+      "pruning": "三蔓整枝，保留主蔓和 2 条健壮侧蔓；其余侧枝、孙蔓摘除。",
+      "others": "选留主蔓第 2–3 朵雌花坐瓜；垫草翻瓜改善着色。"
+    },
+    "pests": "枯萎病、炭疽病、白粉病、蚜虫、红蜘蛛、瓜绢螟。"
+  },
+  {
+    "id": "muskmelon",
+    "name": "甜瓜",
+    "category": "fruit",
+    "icon": "🍈",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "3 月下旬至 4 月育苗，5 月定植，6–8 月采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "育苗。种子浸种 4–6 小时，28–30℃ 催芽后播于营养钵。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "2 片真叶时间苗，每钵留 1 株；苗龄 25–30 天定植。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "终霜后定植，浇透水。"
+      },
+      {
+        "time": "5月中旬–6月",
+        "action": "伸蔓期整枝绑蔓，留主蔓和子蔓。"
+      },
+      {
+        "time": "6月–8月",
+        "action": "果实网纹清晰、散发香味时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每钵留 1 株。",
+      "transplant": "苗龄 25–30 天，3–4 片真叶时定植。",
+      "spacing": "行距 1.2–1.5 米，株距 0.4–0.5 米。",
+      "watering": "定植浇透水；伸蔓期控水；果实膨大期保持充足水分；成熟前 7 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 25 公斤；坐瓜后追施钾肥 2 次。",
+      "pruning": "单蔓或双蔓整枝；及时摘心、绑蔓。",
+      "others": "选留中部子蔓雌花坐瓜；及时翻瓜使着色均匀。"
+    },
+    "pests": "白粉病、霜霉病、蔓枯病、蚜虫、红蜘蛛。"
+  },
+  {
+    "id": "okra",
+    "name": "秋葵",
+    "category": "fruit",
+    "icon": "🌿",
+    "sowMonths": [
+      4,
+      5
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "4 月下旬至 5 月直播，终霜后出苗，7–10 月采收嫩果。",
+    "steps": [
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "直播。种子用 50–55℃ 温水浸种 10–12 小时，沥干后按穴距 30 厘米，每穴 2–3 粒播种，覆土 2 厘米。"
+      },
+      {
+        "time": "5月中旬（小满前后）",
+        "action": "2 片真叶时间苗，每穴留 2 株；4 片真叶定苗，每穴留 1 株。"
+      },
+      {
+        "time": "6月",
+        "action": "现蕾前中耕培土，追施一次氮肥。"
+      },
+      {
+        "time": "7月–10月",
+        "action": "嫩果长 8–10 厘米时及时采收，每 2–3 天采一次。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每穴留 2 株；4 片真叶定苗，每穴留 1 株。",
+      "transplant": "一般不移栽，以直播为主。",
+      "spacing": "行距 60–70 厘米，株距 30–40 厘米。",
+      "watering": "出苗前保持土壤湿润；生长期保持土壤见干见湿；干旱时浇水。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤、复合肥 20 公斤；开花前追施磷钾肥。",
+      "pruning": "及时摘除下部老叶、病叶；生长过旺可摘心。",
+      "others": "秋葵喜温，终霜后播种；采收时戴手套防绒毛刺痒。"
+    },
+    "pests": "病毒病、疫病、蚜虫、棉铃虫、红蜘蛛。"
+  },
+  {
+    "id": "greenbean",
+    "name": "菜豆",
+    "category": "bean",
+    "icon": "🫘",
+    "sowMonths": [
+      4,
+      5,
+      7,
+      8
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春播 4 月下旬至 5 月，秋播 7 月下旬至 8 月，直播采收。",
+    "steps": [
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "春播直播。种子常温浸种 3–4 小时，按行距 50 厘米、穴距 25–30 厘米，每穴 3–4 粒播种，覆土 3 厘米。"
+      },
+      {
+        "time": "5月中旬（小满前后）",
+        "action": "出苗后 2 片真叶时间苗，每穴留 2–3 株。"
+      },
+      {
+        "time": "7月下旬–8月初（立秋前后）",
+        "action": "秋播直播。选择耐热品种，播后遮阴保湿。"
+      },
+      {
+        "time": "6月–10月",
+        "action": "荚果饱满、尚未鼓粒时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每穴留 2–3 株。",
+      "transplant": "菜豆多直播，育苗移栽易伤根，一般不采用。",
+      "spacing": "行距 50–60 厘米，穴距 25–30 厘米。",
+      "watering": "播种前浇足底水；开花结荚期保持土壤湿润，忌积水。",
+      "fertilizing": "底肥亩施有机肥 2500 公斤、复合肥 20 公斤；开花结荚期追施复合肥 10–15 公斤。",
+      "pruning": "及时引蔓上架；摘除病老叶。",
+      "others": "搭人字架或棚架；高温季节注意遮阴降温。"
+    },
+    "pests": "锈病、炭疽病、豆荚螟、蚜虫、红蜘蛛。"
+  },
+  {
+    "id": "cowpea",
+    "name": "豇豆",
+    "category": "bean",
+    "icon": "🫛",
+    "sowMonths": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "4–7 月均可直播，分批播种可延长采收。",
+    "steps": [
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "春播直播。种子浸种 3–4 小时，按行距 60 厘米、穴距 25 厘米，每穴 3–4 粒。"
+      },
+      {
+        "time": "5月中旬（小满前后）",
+        "action": "2 片真叶时间苗，每穴留 2–3 株。"
+      },
+      {
+        "time": "6月–7月",
+        "action": "引蔓上架，摘除基部侧蔓。"
+      },
+      {
+        "time": "7月–10月",
+        "action": "荚果细长、籽粒未鼓时及时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，每穴留 2–3 株。",
+      "transplant": "豇豆直播为主，育苗易伤根。",
+      "spacing": "行距 60–70 厘米，穴距 25 厘米。",
+      "watering": "苗期控水防徒长；开花结荚期保持土壤湿润。",
+      "fertilizing": "底肥亩施有机肥 2500 公斤、复合肥 20 公斤；结荚期每 10 天追施复合肥一次。",
+      "pruning": "主蔓 1.5 米左右摘心；及时引蔓、绑蔓。",
+      "others": "搭架栽培；分批播种，每半月播一次可延续采收。"
+    },
+    "pests": "锈病、白粉病、豆荚螟、蚜虫、红蜘蛛。"
+  },
+  {
+    "id": "pea",
+    "name": "豌豆",
+    "category": "bean",
+    "icon": "🫛",
+    "sowMonths": [
+      2,
+      3,
+      9,
+      10
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      5,
+      6,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春播 2 月下旬至 3 月，秋播 9 月下旬至 10 月。",
+    "steps": [
+      {
+        "time": "2月下旬–3月上旬（雨水–惊蛰）",
+        "action": "春播。种子浸种 4–6 小时，按行距 20–30 厘米、株距 5–8 厘米条播。"
+      },
+      {
+        "time": "3月中旬（春分前后）",
+        "action": "苗高 5–8 厘米时间苗，保持株距 5–8 厘米。"
+      },
+      {
+        "time": "9月下旬–10月上旬（秋分–寒露）",
+        "action": "秋播。选择耐寒品种，播种后覆盖稻草保温。"
+      },
+      {
+        "time": "5月–6月、11月",
+        "action": "荚果饱满、花尚可见时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 5–8 厘米时第一次间苗，保持株距 5–8 厘米。",
+      "transplant": "豌豆一般直播，不耐移栽。",
+      "spacing": "行距 20–30 厘米，株距 5–8 厘米。",
+      "watering": "苗期保持土壤湿润；开花结荚期增加浇水；采收前适当控水。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤、磷肥 15 公斤；开花期追施复合肥 10 公斤。",
+      "pruning": "及时搭架引蔓；摘除老叶、病叶。",
+      "others": "秋播需选耐寒品种；与根瘤菌拌种可提高产量。"
+    },
+    "pests": "白粉病、根腐病、蚜虫、豆荚螟。"
+  },
+  {
+    "id": "edamame",
+    "name": "毛豆",
+    "category": "bean",
+    "icon": "🫛",
+    "sowMonths": [
+      4,
+      5,
+      6
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      7,
+      8,
+      9
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "4 月下旬至 6 月直播，分期播种，7–9 月采收青豆荚。",
+    "steps": [
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "春播直播。种子浸种 4 小时，按行距 40 厘米、株距 10–15 厘米点播。"
+      },
+      {
+        "time": "5月中旬（小满前后）",
+        "action": "2 片真叶时间苗，保持株距 10–15 厘米。"
+      },
+      {
+        "time": "6月上旬（芒种前后）",
+        "action": "夏播直播。选择早熟品种。"
+      },
+      {
+        "time": "7月–9月",
+        "action": "豆荚饱满、籽粒明显鼓起时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，保持株距 10–15 厘米。",
+      "transplant": "毛豆直播为主。",
+      "spacing": "行距 40 厘米，株距 10–15 厘米。",
+      "watering": "苗期适当控水；开花结荚期保持土壤湿润。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤、复合肥 15 公斤；开花期追施磷钾肥。",
+      "pruning": "及时中耕除草；摘除老叶。",
+      "others": "分期播种可延长采收；采收后及时剥荚或冷冻保存。"
+    },
+    "pests": "病毒病、锈病、蚜虫、豆荚螟。"
+  },
+  {
+    "id": "corn",
+    "name": "玉米",
+    "category": "other",
+    "icon": "🌽",
+    "sowMonths": [
+      4,
+      5,
+      6
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "4 月下旬至 6 月直播，夏播 6 月，7–10 月采收。",
+    "steps": [
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "春播直播。按行距 60 厘米、株距 25–30 厘米点播，每穴 2–3 粒，覆土 3–4 厘米。"
+      },
+      {
+        "time": "5月中旬（小满前后）",
+        "action": "3 叶期间苗，每穴留 2 株；5 叶期定苗，每穴留 1 株。"
+      },
+      {
+        "time": "6月上旬（芒种前后）",
+        "action": "夏播直播。选择早熟品种。"
+      },
+      {
+        "time": "7月–10月",
+        "action": "苞叶变黄、籽粒硬化时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "3 叶期间苗，每穴留 2 株；5 叶期定苗，每穴留 1 株。",
+      "transplant": "玉米一般不移栽。",
+      "spacing": "行距 60 厘米，株距 25–30 厘米。",
+      "watering": "苗期耐旱；大喇叭口期、抽雄期保证水分；灌浆期保持土壤湿润。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤、复合肥 30 公斤；大喇叭口期追施尿素 15–20 公斤。",
+      "pruning": "及时摘除分蘖；授粉不良时人工辅助授粉。",
+      "others": "不同品种隔离种植，避免串粉影响品质。"
+    },
+    "pests": "玉米螟、大斑病、小斑病、蚜虫、锈病。"
+  },
+  {
+    "id": "spinach",
+    "name": "菠菜",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      3,
+      4,
+      9,
+      10
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      4,
+      5,
+      6,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "半阴",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春播 3 月中下旬，秋播 9 月中下旬为主。",
+    "steps": [
+      {
+        "time": "3月中下旬（春分前后）",
+        "action": "春播。种子冷水浸种 6–8 小时，晾干后条播或撒播，覆土 1 厘米。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "幼苗 2–3 片真叶时第一次间苗，保持株距 3–5 厘米。"
+      },
+      {
+        "time": "9月中下旬（秋分前后）",
+        "action": "秋播。选择耐寒品种，播后保持土壤湿润。"
+      },
+      {
+        "time": "10月–11月、4月–6月",
+        "action": "叶片肥厚、叶色深绿时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2–3 片真叶时第一次间苗；4–5 片真叶时定苗，株距 8–10 厘米。",
+      "transplant": "菠菜一般直播，不移栽。",
+      "spacing": "条播行距 15–20 厘米，株距 8–10 厘米。",
+      "watering": "保持土壤湿润；高温季节早晚浇水。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤；生长期追施氮肥 2 次。",
+      "pruning": "及时摘除黄叶；采收时剥叶或整株收割。",
+      "others": "菠菜喜凉，夏季需遮阴；秋播可覆盖越冬。"
+    },
+    "pests": "霜霉病、炭疽病、蚜虫、潜叶蝇。"
+  },
+  {
+    "id": "lettuce",
+    "name": "生菜",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      3,
+      4,
+      8,
+      9
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      9,
+      10
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春秋两季播种育苗，移栽后 40–60 天采收。",
+    "steps": [
+      {
+        "time": "3月上旬–中旬（惊蛰–春分）",
+        "action": "春播育苗。种子浸种 4 小时后播于穴盘，覆土 0.5 厘米。"
+      },
+      {
+        "time": "4月上旬（清明前后）",
+        "action": "2 片真叶时间苗，4–5 片真叶时定植。"
+      },
+      {
+        "time": "8月下旬–9月上旬（处暑前后）",
+        "action": "秋播育苗。遮阴降温。"
+      },
+      {
+        "time": "9月下旬–10月上旬（秋分前后）",
+        "action": "秋生菜定植。"
+      },
+      {
+        "time": "5月–6月、10月–11月",
+        "action": "叶球紧实或叶片充分长大时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时第一次间苗；4–5 片真叶时定苗或定植。",
+      "transplant": "苗龄 25–35 天，4–5 片真叶时定植。",
+      "spacing": "行距 25–30 厘米，株距 20–25 厘米。",
+      "watering": "保持土壤湿润；结球期充足供水，采收前控水。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤、复合肥 15 公斤；莲座期追施氮肥，结球期追钾肥。",
+      "pruning": "及时摘除老叶、病叶；散叶型可多次采收外叶。",
+      "others": "夏季高温需遮阴，否则易抽薹。"
+    },
+    "pests": "软腐病、霜霉病、蚜虫、菜青虫。"
+  },
+  {
+    "id": "youmaicai",
+    "name": "油麦菜",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      3,
+      4,
+      8,
+      9
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      9,
+      10
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春秋两季播种，生长快，多次采收。",
+    "steps": [
+      {
+        "time": "3月上旬–中旬（惊蛰–春分）",
+        "action": "春播育苗。种子浸种 4 小时后撒播或穴盘。"
+      },
+      {
+        "time": "4月上旬（清明前后）",
+        "action": "2–3 片真叶时间苗，4–5 片真叶时定植。"
+      },
+      {
+        "time": "8月下旬–9月上旬（处暑前后）",
+        "action": "秋播育苗。"
+      },
+      {
+        "time": "9月下旬–10月上旬（秋分前后）",
+        "action": "秋油麦菜定植。"
+      },
+      {
+        "time": "5月–6月、10月–11月",
+        "action": "叶片 20–30 厘米时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2–3 片真叶时第一次间苗；4–5 片真叶时定苗。",
+      "transplant": "苗龄 25–30 天，4–5 片真叶时定植。",
+      "spacing": "行距 20–25 厘米，株距 15–20 厘米。",
+      "watering": "保持土壤湿润；干旱时早晚浇水。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤；生长期追施氮肥 2–3 次。",
+      "pruning": "及时摘除老叶；可掰叶采收。",
+      "others": "夏季遮阴防抽薹；采收及时防老化。"
+    },
+    "pests": "霜霉病、软腐病、蚜虫、菜青虫。"
+  },
+  {
+    "id": "bokchoy",
+    "name": "小白菜",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      3,
+      4,
+      5,
+      8,
+      9
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "生长周期短，可分批播种。",
+    "steps": [
+      {
+        "time": "3月上旬–5月下旬（惊蛰–小满）",
+        "action": "春播分批。种子浸种 2 小时后撒播或条播，覆土 0.5 厘米。"
+      },
+      {
+        "time": "8月上旬–9月下旬（立秋–秋分）",
+        "action": "秋播分批。播后遮阴保湿。"
+      },
+      {
+        "time": "4月–6月、9月–10月",
+        "action": "株高 15–20 厘米时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，保持株距 10 厘米左右。",
+      "transplant": "一般不移栽。",
+      "spacing": "条播行距 15 厘米，株距 10 厘米。",
+      "watering": "保持土壤湿润；夏季早晚浇水。",
+      "fertilizing": "底肥亩施有机肥 1500 公斤；生长期追施氮肥 1–2 次。",
+      "pruning": "及时摘除黄叶。",
+      "others": "播种密度大时可一次性间苗采收。"
+    },
+    "pests": "霜霉病、软腐病、蚜虫、菜青虫。"
+  },
+  {
+    "id": "napacabbage",
+    "name": "大白菜",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      8
+    ],
+    "transplantMonths": [
+      9
+    ],
+    "harvestMonths": [
+      10,
+      11,
+      12
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "较多",
+    "soil": "肥沃深厚",
+    "timing": "8 月育苗，9 月定植，冬前采收或贮藏。",
+    "steps": [
+      {
+        "time": "8月上旬–中旬（立秋前后）",
+        "action": "育苗。种子浸种 4 小时后播于苗床，覆土 0.8 厘米。"
+      },
+      {
+        "time": "8月下旬–9月上旬（处暑–白露）",
+        "action": "2 片真叶时间苗；苗龄 20–25 天、5–6 片真叶时定植。"
+      },
+      {
+        "time": "9月中旬（秋分前后）",
+        "action": "定植，浇透水；覆盖地膜保温。"
+      },
+      {
+        "time": "10月–12月",
+        "action": "叶球紧实后采收，可分批或贮藏。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时第一次间苗；4–5 片真叶时定苗。",
+      "transplant": "苗龄 20–25 天，5–6 片真叶时定植。",
+      "spacing": "行距 50–60 厘米，株距 40–45 厘米。",
+      "watering": "定植后浇透水；莲座期和结球期保持充足水分。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；莲座期追施氮肥，结球期追钾肥。",
+      "pruning": "及时摘除老叶、病叶；束叶防晒。",
+      "others": "选择抗病品种；防治软腐病、病毒病。"
+    },
+    "pests": "软腐病、病毒病、霜霉病、蚜虫、菜青虫。"
+  },
+  {
+    "id": "cabbage",
+    "name": "甘蓝",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      3,
+      6,
+      7
+    ],
+    "transplantMonths": [
+      4,
+      7,
+      8
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春播 3 月育苗、4 月定植；秋播 6–7 月育苗、7–8 月定植。",
+    "steps": [
+      {
+        "time": "3月上旬或6月中旬–7月上旬",
+        "action": "育苗。种子浸种 4 小时后播种，覆土 0.5 厘米。"
+      },
+      {
+        "time": "4月上旬或7月中旬–8月上旬",
+        "action": "幼苗 3 片真叶时间苗，5–6 片真叶时定植。"
+      },
+      {
+        "time": "4月中旬或7月下旬–8月中旬",
+        "action": "定植。浇透水，春栽注意终霜，秋栽适当遮阴。"
+      },
+      {
+        "time": "5月–6月、9月–11月",
+        "action": "叶球紧实、有光泽时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "3 片真叶时间苗，5–6 片真叶定苗。",
+      "transplant": "苗龄 30–40 天，5–6 片真叶时定植。",
+      "spacing": "行距 40–50 厘米，株距 35–40 厘米。",
+      "watering": "定植后浇透水；结球期保持土壤湿润。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 25 公斤；莲座期追施氮肥，结球期追施钾肥。",
+      "pruning": "不需整枝，及时摘除老叶。",
+      "others": "秋甘蓝注意防治菜青虫；裂球前控水。"
+    },
+    "pests": "软腐病、黑腐病、菜青虫、蚜虫。"
+  },
+  {
+    "id": "cauliflower",
+    "name": "花椰菜",
+    "category": "leaf",
+    "icon": "🥦",
+    "sowMonths": [
+      6,
+      7
+    ],
+    "transplantMonths": [
+      7,
+      8
+    ],
+    "harvestMonths": [
+      9,
+      10,
+      11
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "较多",
+    "soil": "肥沃疏松",
+    "timing": "6–7 月育苗，7–8 月定植，秋末采收。",
+    "steps": [
+      {
+        "time": "6月中旬–7月上旬（芒种–小暑）",
+        "action": "育苗。种子浸种 4 小时后播于穴盘，覆土 0.5 厘米，遮阴降温。"
+      },
+      {
+        "time": "7月中旬–8月上旬（小暑–立秋）",
+        "action": "幼苗 3–4 片真叶时间苗，5–6 片真叶时定植。"
+      },
+      {
+        "time": "7月下旬–8月中旬（大暑–立秋）",
+        "action": "定植。选择阴天或傍晚，浇透水，适当遮阴 3–5 天。"
+      },
+      {
+        "time": "9月–11月",
+        "action": "花球充分长大、边缘未散开时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "3–4 片真叶时间苗，5–6 片真叶定苗。",
+      "transplant": "苗龄 25–35 天，5–6 片真叶时定植。",
+      "spacing": "行距 50–60 厘米，株距 40–50 厘米。",
+      "watering": "保持土壤湿润，花球形成期不能缺水。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；定植后 15 天追施氮肥，花球形成期追施复合肥。",
+      "pruning": "及时摘除老叶、病叶；花球露出后折叶遮盖防晒。",
+      "others": "选择耐热早熟品种；注意硼钼肥补充。"
+    },
+    "pests": "黑腐病、霜霉病、菜青虫、蚜虫。"
+  },
+  {
+    "id": "broccoli",
+    "name": "西兰花",
+    "category": "leaf",
+    "icon": "🥦",
+    "sowMonths": [
+      3,
+      6,
+      7
+    ],
+    "transplantMonths": [
+      4,
+      7,
+      8
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "较多",
+    "soil": "肥沃疏松",
+    "timing": "春播 3 月育苗、4 月定植；秋播 6–7 月育苗、7–8 月定植。",
+    "steps": [
+      {
+        "time": "3月上旬或6月中旬–7月上旬",
+        "action": "育苗。种子浸种 4 小时后播种，覆土 0.5 厘米。"
+      },
+      {
+        "time": "4月上旬或7月中旬–8月上旬",
+        "action": "幼苗 3–4 片真叶时间苗，5–6 片真叶时定植。"
+      },
+      {
+        "time": "4月中旬或7月下旬–8月中旬",
+        "action": "定植。浇透水，春栽注意防寒，秋栽注意遮阴。"
+      },
+      {
+        "time": "5月–6月、9月–11月",
+        "action": "花球紧实、边缘未散开时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "3–4 片真叶时间苗，5–6 片真叶定苗。",
+      "transplant": "苗龄 25–35 天，5–6 片真叶时定植。",
+      "spacing": "行距 50–60 厘米，株距 40–45 厘米。",
+      "watering": "保持土壤湿润，花球形成期充足供水。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；定植后 15 天追肥，花球期重施钾肥。",
+      "pruning": "摘除老叶、病叶；主花球采收后侧枝可继续采收小花球。",
+      "others": "注意硼肥和钼肥；高温期需遮阴。"
+    },
+    "pests": "黑腐病、霜霉病、菜青虫、蚜虫。"
+  },
+  {
+    "id": "kale",
+    "name": "芥蓝",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      3,
+      4,
+      8,
+      9
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      9
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      10,
+      11
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春秋两季播种，秋季品质更佳。",
+    "steps": [
+      {
+        "time": "3月上旬–4月上旬（惊蛰–清明）",
+        "action": "春播。种子浸种 4 小时后播种，育苗或直播。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "直播苗间苗，育苗苗 4–5 片真叶时定植。"
+      },
+      {
+        "time": "8月下旬–9月中旬（处暑–秋分）",
+        "action": "秋播主要时期。"
+      },
+      {
+        "time": "5月–6月、10月–11月",
+        "action": "花薹高 15–20 厘米、花蕾未开放时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时间苗，4 片真叶定苗。",
+      "transplant": "苗龄 25–30 天，4–5 片真叶时定植。",
+      "spacing": "行距 25 厘米，株距 20 厘米。",
+      "watering": "保持土壤湿润，花薹形成期充足供水。",
+      "fertilizing": "底肥亩施有机肥 2500 公斤；定植后 10 天追施氮肥，花薹期追施复合肥。",
+      "pruning": "主薹采收后侧枝可继续采收 2–3 次。",
+      "others": "注意硼肥补充，缺硼易花茎空心。"
+    },
+    "pests": "霜霉病、软腐病、菜青虫、蚜虫。"
+  },
+  {
+    "id": "amaranth",
+    "name": "苋菜",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "4–8 月均可直播，生长快，多次采收。",
+    "steps": [
+      {
+        "time": "4月上旬–5月上旬（清明–立夏）",
+        "action": "春播。种子混沙撒播，覆土 0.5 厘米。"
+      },
+      {
+        "time": "5月中旬–6月（小满–芒种）",
+        "action": "苗高 5 厘米时间苗，10 厘米定苗，可间拔采收。"
+      },
+      {
+        "time": "6月–8月（夏至–处暑）",
+        "action": "夏播分批，高温遮阴。"
+      },
+      {
+        "time": "5月–9月",
+        "action": "株高 20 厘米留茬 3–5 厘米采收。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 5 厘米时第一次间苗，保持株距 5 厘米；10–15 厘米时定苗。",
+      "transplant": "苋菜一般直播，也可育苗移栽。",
+      "spacing": "行距 20 厘米，株距 10–15 厘米。",
+      "watering": "保持土壤湿润；干旱时早晚浇水。",
+      "fertilizing": "底肥亩施有机肥 1500 公斤；每次采收后追施氮肥。",
+      "pruning": "采收时留基部 3–5 厘米，促发侧枝。",
+      "others": "红苋、绿苋、彩苋均可；夏季适当遮阴。"
+    },
+    "pests": "白锈病、褐斑病、蚜虫。"
+  },
+  {
+    "id": "waterspinach",
+    "name": "空心菜",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "transplantMonths": [
+      5,
+      6,
+      7
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "较多",
+    "soil": "肥沃疏松",
+    "timing": "4–7 月播种或扦插，多次采收。",
+    "steps": [
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "春播。种子浸种 24 小时，30℃ 催芽后撒播或条播，覆土 1 厘米。"
+      },
+      {
+        "time": "5月中旬（小满前后）",
+        "action": "苗高 10 厘米时间苗，保持株距 10–15 厘米。"
+      },
+      {
+        "time": "6月–7月",
+        "action": "也可扦插繁殖。剪取 15 厘米茎段，直接插于田间。"
+      },
+      {
+        "time": "5月–10月",
+        "action": "株高 25–30 厘米时采收，留基部 2–3 节促发侧枝。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 10 厘米时第一次间苗，保持株距 10–15 厘米。",
+      "transplant": "苗龄 20–25 天、5–6 片真叶时可定植，也可直播。",
+      "spacing": "行距 20–25 厘米，株距 10–15 厘米。",
+      "watering": "喜水，保持土壤湿润；高温季节每天浇水。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤；每次采收后追施氮肥。",
+      "pruning": "采收时留基部 2–3 节；及时摘除老化茎叶。",
+      "others": "空心菜可水培或土培；病虫害较少。"
+    },
+    "pests": "白锈病、褐斑病、蚜虫、斜纹夜蛾。"
+  },
+  {
+    "id": "celery",
+    "name": "芹菜",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      6,
+      7
+    ],
+    "transplantMonths": [
+      8,
+      9
+    ],
+    "harvestMonths": [
+      10,
+      11,
+      12
+    ],
+    "difficulty": "中等",
+    "sun": "半阴",
+    "water": "较多",
+    "soil": "肥沃疏松",
+    "timing": "6 月下旬至 7 月育苗，8 月下旬至 9 月定植，秋冬采收。",
+    "steps": [
+      {
+        "time": "6月下旬–7月上旬（夏至–小暑）",
+        "action": "育苗。种子需低温催芽（5℃ 处理 48 小时），撒播，覆土 0.3 厘米。"
+      },
+      {
+        "time": "7月下旬–8月上旬（大暑前后）",
+        "action": "苗高 5 厘米时间苗，保持株距 2–3 厘米。"
+      },
+      {
+        "time": "8月下旬–9月上旬（处暑–白露）",
+        "action": "苗龄 50–60 天、5–6 片真叶时定植。"
+      },
+      {
+        "time": "10月–12月",
+        "action": "叶柄肥厚、心叶充分生长时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 5 厘米时第一次间苗；定植前定苗，株距 2–3 厘米。",
+      "transplant": "苗龄 50–60 天，5–6 片真叶时定植。",
+      "spacing": "行距 20–25 厘米，株距 15–18 厘米。",
+      "watering": "保持土壤湿润；缺水易空心。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤；生长期追施氮肥和钾肥。",
+      "pruning": "及时摘除老叶、黄叶。",
+      "others": "定植后遮阴缓苗；心叶生长期保持充足水分。"
+    },
+    "pests": "斑枯病、软腐病、蚜虫、潜叶蝇。"
+  },
+  {
+    "id": "coriander",
+    "name": "香菜",
+    "category": "herb",
+    "icon": "🌿",
+    "sowMonths": [
+      3,
+      4,
+      8,
+      9
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      5,
+      6,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "半阴",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春秋播种，出苗慢，需保持土壤湿润。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春播。种子搓壳后用温水浸种 12 小时，撒播或条播，覆土 1 厘米。"
+      },
+      {
+        "time": "8月下旬–9月上旬（处暑前后）",
+        "action": "秋播。播后覆盖稻草保湿。"
+      },
+      {
+        "time": "5月–6月、10月–11月",
+        "action": "株高 15–20 厘米时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 3–5 厘米时间苗，保持株距 5–8 厘米。",
+      "transplant": "香菜一般直播。",
+      "spacing": "条播行距 15 厘米，株距 5–8 厘米。",
+      "watering": "保持土壤湿润；高温季节早晚浇水。",
+      "fertilizing": "底肥亩施有机肥 1500 公斤；生长期追施氮肥 1–2 次。",
+      "pruning": "及时采收，防止抽薹。",
+      "others": "种子发芽慢，播前可碾破果皮。"
+    },
+    "pests": "叶斑病、白粉病、蚜虫。"
+  },
+  {
+    "id": "chives",
+    "name": "韭菜",
+    "category": "herb",
+    "icon": "🌿",
+    "sowMonths": [
+      3,
+      4,
+      9
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      10
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春播 3–4 月，秋播 9 月；也可分株移栽。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春播。种子浸种 8–12 小时，撒播或条播，覆土 1 厘米。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "苗高 5 厘米时间苗，保持株距 5 厘米。"
+      },
+      {
+        "time": "9月中下旬（秋分前后）",
+        "action": "秋播。选择耐寒品种。"
+      },
+      {
+        "time": "5月–11月",
+        "action": "苗高 25–30 厘米时收割，留茬 3–4 厘米。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 5 厘米时第一次间苗，保持株距 5 厘米。",
+      "transplant": "苗龄 60–80 天或分株移栽。",
+      "spacing": "行距 20–25 厘米，株距 10 厘米。",
+      "watering": "保持土壤湿润；收割后 2–3 天再浇水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤；每次收割后追施氮肥。",
+      "pruning": "及时割除花薹；秋季减少收割养根。",
+      "others": "韭菜多年生，可连续收割 3–5 年。"
+    },
+    "pests": "灰霉病、疫病、韭蛆、蚜虫。"
+  },
+  {
+    "id": "tonghao",
+    "name": "茼蒿",
+    "category": "leaf",
+    "icon": "🥬",
+    "sowMonths": [
+      3,
+      4,
+      8,
+      9
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      4,
+      5,
+      6,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春秋播种，生长快，多次采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春播。种子撒播或条播，覆土 0.5 厘米。"
+      },
+      {
+        "time": "8月下旬–9月上旬（处暑前后）",
+        "action": "秋播。播后遮阴保湿。"
+      },
+      {
+        "time": "4月–6月、10月–11月",
+        "action": "株高 20 厘米时采收，可留茬 3 厘米再发。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 5 厘米时间苗，保持株距 5–8 厘米。",
+      "transplant": "一般不移栽。",
+      "spacing": "条播行距 15 厘米，株距 5–8 厘米。",
+      "watering": "保持土壤湿润；干旱时浇水。",
+      "fertilizing": "底肥亩施有机肥 1500 公斤；生长期追施氮肥。",
+      "pruning": "及时采收，防止老化抽薹。",
+      "others": "茼蒿喜凉，夏季需遮阴。"
+    },
+    "pests": "霜霉病、叶斑病、蚜虫。"
+  },
+  {
+    "id": "carrot",
+    "name": "胡萝卜",
+    "category": "root",
+    "icon": "🥕",
+    "sowMonths": [
+      3,
+      4,
+      7,
+      8
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      8
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      9,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、沙壤土",
+    "timing": "春播 3 月下旬至 4 月，秋播 7 月下旬至 8 月；肉质根膨大后采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春播。种子温水浸种 12 小时后沥干，条播行距 20 厘米，覆土 0.5–1 厘米。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "2 片真叶时第一次间苗，保持株距 3 厘米。"
+      },
+      {
+        "time": "4月下旬（谷雨–立夏）",
+        "action": "4–5 片真叶时定苗，株距 8–10 厘米。"
+      },
+      {
+        "time": "7月下旬–8月上旬（立秋前后）",
+        "action": "秋播。选择耐热品种，播后遮阴保湿。"
+      },
+      {
+        "time": "6月–7月、9月–11月",
+        "action": "肉质根充分膨大、肩部露出土面时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时第一次间苗，株距 3 厘米；4–5 片真叶时定苗，株距 8–10 厘米。",
+      "transplant": "胡萝卜多直播，一般不移栽，以免肉质根分叉。",
+      "spacing": "条播行距 20 厘米，株距 8–10 厘米。",
+      "watering": "播种后保持土壤湿润；肉质根膨大期均匀供水，忌忽干忽湿。",
+      "fertilizing": "底肥亩施有机肥 2500 公斤；肉质根膨大期追施钾肥，忌过多氮肥。",
+      "pruning": "及时除草，避免伤根；摘除老叶。",
+      "others": "土壤需深耕 25 厘米以上，避免石块导致分叉。"
+    },
+    "pests": "黑斑病、软腐病、蚜虫、根结线虫。"
+  },
+  {
+    "id": "radish",
+    "name": "白萝卜",
+    "category": "root",
+    "icon": "🥔",
+    "sowMonths": [
+      3,
+      4,
+      7,
+      8
+    ],
+    "transplantMonths": [
+      4,
+      5,
+      8
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "春播 3–4 月，秋播 7–8 月；播后 50–70 天采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春播。种子浸种 2–3 小时，条播或点播，覆土 1.5 厘米。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "2 片真叶时间苗，4 片真叶定苗。"
+      },
+      {
+        "time": "7月下旬–8月上旬（立秋前后）",
+        "action": "秋播。选择抗病耐热品种，播后遮阴。"
+      },
+      {
+        "time": "5月–6月、9月–11月",
+        "action": "肉质根充分膨大、叶色转淡时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时第一次间苗；4 片真叶时定苗。",
+      "transplant": "白萝卜多直播，不宜移栽。",
+      "spacing": "行距 30–40 厘米，株距 20–25 厘米。",
+      "watering": "肉质根膨大期保持土壤湿润；采收前 7 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 20 公斤；膨大期追施钾肥。",
+      "pruning": "摘除老叶、病叶；及时培土防露头。",
+      "others": "深耕细耙，土壤松软有利于肉质根膨大。"
+    },
+    "pests": "黑腐病、软腐病、蚜虫、菜青虫。"
+  },
+  {
+    "id": "potato",
+    "name": "马铃薯",
+    "category": "root",
+    "icon": "🥔",
+    "sowMonths": [
+      3
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "3 月催芽切块，4 月定植，6–8 月采收。",
+    "steps": [
+      {
+        "time": "3月上旬–中旬（惊蛰前后）",
+        "action": "选无病种薯，置于 15–20℃ 散射光下催芽，芽长 0.5 厘米时切块，每块留 2–3 个芽眼。"
+      },
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "切块用草木灰或杀菌剂拌种，按行距 60 厘米、株距 20–25 厘米播种，覆土 10 厘米。"
+      },
+      {
+        "time": "4月中旬–下旬（谷雨前后）",
+        "action": "苗高 10 厘米时第一次中耕培土。"
+      },
+      {
+        "time": "5月",
+        "action": "现蕾期第二次培土，追施钾肥。"
+      },
+      {
+        "time": "6月–8月",
+        "action": "茎叶枯黄、块茎成熟时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "马铃薯不需间苗，出苗后注意查苗补缺。",
+      "transplant": "马铃薯用种薯播种，非育苗移栽。",
+      "spacing": "行距 60 厘米，株距 20–25 厘米。",
+      "watering": "苗期适当控水；块茎膨大期保持土壤湿润；成熟前 10 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 25 公斤；现蕾期追施钾肥 15 公斤。",
+      "pruning": "及时摘除花蕾；茎叶过旺可掐顶。",
+      "others": "收获前割除地上部 7–10 天，利于薯皮老化。"
+    },
+    "pests": "晚疫病、早疫病、疮痂病、蚜虫、地下害虫。"
+  },
+  {
+    "id": "sweetpotato",
+    "name": "甘薯",
+    "category": "root",
+    "icon": "🍠",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      5,
+      6
+    ],
+    "harvestMonths": [
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、沙壤土",
+    "timing": "3–4 月育苗，5–6 月栽插，9–10 月采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "育苗。选择无病种薯，排于苗床，覆土 3–5 厘米，盖膜保温。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "苗高 20–25 厘米、有 6–8 节时采苗。"
+      },
+      {
+        "time": "5月中旬–6月上旬（小满–芒种）",
+        "action": "栽插。按行距 70–80 厘米、株距 20–25 厘米斜插或水平插，浇透水。"
+      },
+      {
+        "time": "6月–8月",
+        "action": "封垄前中耕除草、培土 2–3 次。"
+      },
+      {
+        "time": "9月–10月",
+        "action": "气温降至 15℃ 以下、薯块充分膨大时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "甘薯不需间苗，栽插密度按品种调整。",
+      "transplant": "薯苗长 20–25 厘米、6–8 节时栽插。",
+      "spacing": "行距 70–80 厘米，株距 20–25 厘米。",
+      "watering": "栽插后浇透水；缓苗后控水；薯块膨大期保持土壤湿润。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤；栽插后 30 天追施钾肥，忌偏施氮肥。",
+      "pruning": "控制旺长，可提蔓 1–2 次，禁止翻蔓。",
+      "others": "选择排水良好地块，防止涝害。"
+    },
+    "pests": "黑斑病、茎线虫病、甘薯天蛾、蚜虫。"
+  },
+  {
+    "id": "taro",
+    "name": "芋头",
+    "category": "root",
+    "icon": "🍠",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      5,
+      6
+    ],
+    "harvestMonths": [
+      9,
+      10
+    ],
+    "difficulty": "中等",
+    "sun": "半阴",
+    "water": "较多",
+    "soil": "肥沃湿润、保水保肥",
+    "timing": "3–4 月催芽育苗，5–6 月定植，9–10 月采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "选顶芽饱满的子芋，晒种 1–2 天后置于 20–25℃ 催芽。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "苗高 10 厘米时定植，按行距 60 厘米、株距 40 厘米，深栽 5–8 厘米。"
+      },
+      {
+        "time": "5月中旬–6月",
+        "action": "浇透水，保持土壤湿润；中耕除草、培土。"
+      },
+      {
+        "time": "7月–8月",
+        "action": "子芋膨大期追肥 2–3 次，保持土壤湿润。"
+      },
+      {
+        "time": "9月–10月",
+        "action": "地上部枯黄、子芋成熟时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "芋头不需间苗，定植时选健壮子芋。",
+      "transplant": "苗高 10 厘米左右时定植。",
+      "spacing": "行距 60 厘米，株距 40 厘米。",
+      "watering": "喜湿，生长期保持土壤湿润；高温季节勤浇水。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；膨大期追施钾肥。",
+      "pruning": "及时摘除老叶、病叶；培土 2–3 次。",
+      "others": "芋头忌干旱，需轮作 3 年以上。"
+    },
+    "pests": "疫病、软腐病、蚜虫、红蜘蛛。"
+  },
+  {
+    "id": "ginger",
+    "name": "姜",
+    "category": "root",
+    "icon": "🫚",
+    "sowMonths": [
+      4,
+      5
+    ],
+    "transplantMonths": [
+      5,
+      6
+    ],
+    "harvestMonths": [
+      10,
+      11
+    ],
+    "difficulty": "中等",
+    "sun": "半阴",
+    "water": "较多",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "4–5 月催芽播种，10–11 月采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "选姜块肥大、芽眼饱满的种姜，晒种 2–3 天后置于 20–25℃ 催芽。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "芽长 1–2 厘米时定植，按行距 50 厘米、株距 20 厘米，芽朝上覆土 4–5 厘米。"
+      },
+      {
+        "time": "5月中旬–6月",
+        "action": "出苗后浇透水；中耕除草、培土 2–3 次。"
+      },
+      {
+        "time": "7月–8月",
+        "action": "姜块膨大期保持土壤湿润，追施复合肥 2–3 次。"
+      },
+      {
+        "time": "10月–11月",
+        "action": "地上部枯黄、姜块成熟时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "姜不需间苗，定植前选留健壮芽。",
+      "transplant": "姜用种姜直播，芽长 1–2 厘米时播种。",
+      "spacing": "行距 50 厘米，株距 20 厘米。",
+      "watering": "出苗前保持土壤湿润；生长期充足供水；采收前 7 天控水。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤；膨大期追施复合肥和钾肥。",
+      "pruning": "及时培土，防止姜块外露变绿。",
+      "others": "喜阴，高温季节可搭遮阳网。"
+    },
+    "pests": "姜瘟病、炭疽病、根结线虫、姜螟。"
+  },
+  {
+    "id": "onion",
+    "name": "洋葱",
+    "category": "root",
+    "icon": "🧅",
+    "sowMonths": [
+      9
+    ],
+    "transplantMonths": [
+      10,
+      11
+    ],
+    "harvestMonths": [
+      5,
+      6
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "9 月育苗，10–11 月定植，翌年 5–6 月采收。",
+    "steps": [
+      {
+        "time": "9月上旬–中旬（白露前后）",
+        "action": "育苗。种子浸种 4 小时后撒播，覆土 0.5 厘米。"
+      },
+      {
+        "time": "10月上旬–中旬（寒露前后）",
+        "action": "苗高 10 厘米、3–4 片真叶时定植。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "定植深度以不埋住叶鞘为宜，浇透水越冬。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "返青后中耕除草、追肥。"
+      },
+      {
+        "time": "5月–6月",
+        "action": "地上部倒伏、鳞茎成熟时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 3–5 厘米时间苗，保持株距 2–3 厘米。",
+      "transplant": "苗龄 45–55 天，3–4 片真叶、茎粗 0.5 厘米时定植。",
+      "spacing": "行距 15–20 厘米，株距 10–12 厘米。",
+      "watering": "定植后浇透水；返青后保持土壤湿润；成熟前 10 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 25 公斤；返青后追施氮肥，鳞茎膨大期追钾肥。",
+      "pruning": "及时摘除抽薹株。",
+      "others": "选择适合当地日照长度的品种。"
+    },
+    "pests": "霜霉病、紫斑病、软腐病、葱蓟马、潜叶蝇。"
+  },
+  {
+    "id": "garlic",
+    "name": "大蒜",
+    "category": "root",
+    "icon": "🧄",
+    "sowMonths": [
+      9,
+      10
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      5,
+      6,
+      7
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "9 月下旬至 10 月播种，翌年 5–7 月采收蒜薹和蒜头。",
+    "steps": [
+      {
+        "time": "9月下旬–10月上旬（秋分–寒露）",
+        "action": "选瓣大饱满的蒜瓣，剥皮后按行距 15–20 厘米、株距 8–10 厘米点播，覆土 2–3 厘米。"
+      },
+      {
+        "time": "10月中旬–11月",
+        "action": "浇透水，覆盖稻草或地膜越冬。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "返青后浇返青水，追施氮肥。"
+      },
+      {
+        "time": "4月下旬–5月",
+        "action": "蒜薹抽出 15–20 厘米时采收蒜薹。"
+      },
+      {
+        "time": "5月下旬–7月",
+        "action": "地上部枯黄 2/3 时采收蒜头。"
+      }
+    ],
+    "management": {
+      "thinning": "大蒜不需间苗，播种前选瓣分级。",
+      "transplant": "大蒜用蒜瓣直播。",
+      "spacing": "行距 15–20 厘米，株距 8–10 厘米。",
+      "watering": "播种后浇透水；返青后保持湿润；蒜薹伸长期和鳞茎膨大期充足供水；收获前 7 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤、复合肥 25 公斤；返青后追施氮肥，膨大期追钾肥。",
+      "pruning": "及时采薹，促进鳞茎膨大。",
+      "others": "秋播需选耐寒品种；春季注意防治蒜蛆。"
+    },
+    "pests": "紫斑病、锈病、蒜蛆、葱蓟马。"
+  },
+  {
+    "id": "leek",
+    "name": "大葱",
+    "category": "root",
+    "icon": "🧅",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      5,
+      6
+    ],
+    "harvestMonths": [
+      10,
+      11,
+      12
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "深厚肥沃、排水良好",
+    "timing": "3–4 月育苗，5–6 月定植，10–12 月采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "育苗。种子浸种 4 小时后撒播，覆土 1 厘米。"
+      },
+      {
+        "time": "4月中旬–下旬（谷雨前后）",
+        "action": "苗高 5 厘米时间苗，保持株距 2–3 厘米。"
+      },
+      {
+        "time": "5月中旬–6月上旬（小满–芒种）",
+        "action": "苗龄 60–70 天、株高 30 厘米时定植，开沟深栽，葱白埋入土中。"
+      },
+      {
+        "time": "7月–9月",
+        "action": "分次培土 3–4 次，每次 2–3 厘米。"
+      },
+      {
+        "time": "10月–12月",
+        "action": "葱白充实后采收。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 5 厘米时第一次间苗；定植前定苗，株距 2–3 厘米。",
+      "transplant": "苗龄 60–70 天，株高 30 厘米左右时定植。",
+      "spacing": "行距 60–70 厘米，株距 5–6 厘米。",
+      "watering": "定植后浇透水；生长期保持土壤湿润；收获前 10 天控水。",
+      "fertilizing": "底肥亩施有机肥 4000 公斤、复合肥 30 公斤；每次培土后追施氮肥。",
+      "pruning": "及时摘除老叶、病叶。",
+      "others": "多次培土可增长葱白。"
+    },
+    "pests": "紫斑病、霜霉病、葱蓟马、潜叶蝇。"
+  },
+  {
+    "id": "scallion",
+    "name": "小葱",
+    "category": "root",
+    "icon": "🌿",
+    "sowMonths": [
+      3,
+      4,
+      8,
+      9
+    ],
+    "transplantMonths": [],
+    "harvestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃",
+    "timing": "春秋两季播种，生长快，可多次采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春播。种子浸种 4 小时后撒播或条播，覆土 1 厘米。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "苗高 5 厘米时间苗，保持株距 3–5 厘米。"
+      },
+      {
+        "time": "8月下旬–9月上旬（处暑前后）",
+        "action": "秋播。播后遮阴保湿。"
+      },
+      {
+        "time": "4月–6月、9月–11月",
+        "action": "株高 20 厘米时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "苗高 5 厘米时第一次间苗，保持株距 3–5 厘米。",
+      "transplant": "小葱可直播，也可分株移栽。",
+      "spacing": "条播行距 10 厘米，株距 3–5 厘米。",
+      "watering": "保持土壤湿润；干旱时浇水。",
+      "fertilizing": "底肥亩施有机肥 1500 公斤；每次采收后追施氮肥。",
+      "pruning": "及时采收，防止老化。",
+      "others": "播种密度大可一次性间苗采收。"
+    },
+    "pests": "霜霉病、紫斑病、葱蓟马。"
+  },
+  {
+    "id": "basil",
+    "name": "罗勒",
+    "category": "herb",
+    "icon": "🌿",
+    "sowMonths": [
+      3,
+      4
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "4–5 月育苗或直播，多次采收嫩叶。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "育苗。种子浸种 4 小时后播于穴盘，覆土 0.5 厘米。"
+      },
+      {
+        "time": "4月中旬（谷雨前后）",
+        "action": "2 片真叶时间苗，4–5 片真叶时定植。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "定植，浇透水。"
+      },
+      {
+        "time": "5月–10月",
+        "action": "株高 15–20 厘米时采收嫩梢，留 2–3 节促发分枝。"
+      }
+    ],
+    "management": {
+      "thinning": "2 片真叶时第一次间苗；4–5 片真叶时定苗。",
+      "transplant": "苗龄 25–30 天，4–5 片真叶时定植。",
+      "spacing": "行距 30–40 厘米，株距 25 厘米。",
+      "watering": "保持土壤湿润，忌积水。",
+      "fertilizing": "底肥亩施有机肥 1500 公斤；每次采收后追施氮肥。",
+      "pruning": "及时摘心促发分枝，防止抽薹开花。",
+      "others": "罗勒不耐霜冻，终霜后播种。"
+    },
+    "pests": "霜霉病、白粉病、蚜虫、红蜘蛛。"
+  },
+  {
+    "id": "mint",
+    "name": "薄荷",
+    "category": "herb",
+    "icon": "🌿",
+    "sowMonths": [
+      3,
+      4,
+      5
+    ],
+    "transplantMonths": [
+      4,
+      5
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "difficulty": "简单",
+    "sun": "半阴",
+    "water": "较多",
+    "soil": "疏松肥沃、湿润",
+    "timing": "春秋分株或扦插繁殖，生长旺盛，多次采收。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "分株繁殖。挖出地下茎，切成 10 厘米段，按株距 20 厘米埋入土中。"
+      },
+      {
+        "time": "4月下旬–5月上旬（谷雨–立夏）",
+        "action": "扦插繁殖。剪取 10 厘米茎段，插入土中 2–3 节，浇透水。"
+      },
+      {
+        "time": "5月–11月",
+        "action": "株高 15–20 厘米时采收嫩茎叶，留基部 5 厘米促发新枝。"
+      }
+    ],
+    "management": {
+      "thinning": "薄荷不需间苗，保持株距 20 厘米即可。",
+      "transplant": "分株或扦插成活后 15–20 天可定植。",
+      "spacing": "行距 25–30 厘米，株距 20 厘米。",
+      "watering": "喜湿润，保持土壤水分充足；夏季早晚浇水。",
+      "fertilizing": "底肥亩施有机肥 1500 公斤；每次采收后追施氮肥。",
+      "pruning": "及时采收，防止茎叶老化；疏除过密茎。",
+      "others": "薄荷蔓延快，建议盆栽或设置隔离带。"
+    },
+    "pests": "薄荷锈病、白粉病、蚜虫、红蜘蛛。"
+  },
+  {
+    "id": "apple",
+    "name": "苹果",
+    "category": "tree",
+    "icon": "🍎",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      8,
+      9,
+      10
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "深厚肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 8–10 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴 80×80 厘米，施足底肥，栽后浇透水，定干高度 80–100 厘米。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。落叶后栽植，浇透封冻水，幼树培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养疏散分层形或纺锤形。"
+      },
+      {
+        "time": "3月（萌芽前）",
+        "action": "喷施石硫合剂清园；萌芽前追施氮肥。"
+      },
+      {
+        "time": "4月–5月",
+        "action": "花期辅助授粉，疏花疏果；防治卷叶蛾、蚜虫。"
+      },
+      {
+        "time": "6月–7月",
+        "action": "果实膨大期追施钾肥，保持土壤湿润；套袋防病虫害。"
+      },
+      {
+        "time": "8月–10月",
+        "action": "果实成熟时分批采收。"
+      }
+    ],
+    "management": {
+      "thinning": "苹果以定植密度控制为主，不需间苗。",
+      "transplant": "选择 1–2 年生嫁接苗，春栽在萌芽前，秋栽在落叶后。",
+      "spacing": "株距 3–5 米，行距 5–6 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；果实膨大期和采前 20 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；萌芽期追氮肥，膨大期追钾肥，采后施基肥。",
+      "pruning": "冬季疏剪、短截；夏季摘心、扭梢、拉枝。",
+      "others": "配置授粉树，主栽与授粉品种比例 4–6:1。"
+    },
+    "pests": "腐烂病、轮纹病、褐斑病、蚜虫、卷叶蛾、红蜘蛛。"
+  },
+  {
+    "id": "pear",
+    "name": "梨",
+    "category": "tree",
+    "icon": "🍐",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "深厚肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 7–10 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴，施足底肥，栽后浇水、覆膜。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，树干涂白防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，保持开心形。"
+      },
+      {
+        "time": "3月（萌芽前）",
+        "action": "喷施石硫合剂；追施萌芽肥。"
+      },
+      {
+        "time": "4月–5月",
+        "action": "花期人工授粉或放蜂；疏花疏果，每果台留 1–2 个果。"
+      },
+      {
+        "time": "5月–7月",
+        "action": "套袋前喷药防病虫；果实膨大期追施钾肥。"
+      },
+      {
+        "time": "7月–10月",
+        "action": "果皮转黄、果柄易离时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "梨以定植密度控制为主。",
+      "transplant": "选择嫁接苗，春栽萌芽前或秋栽落叶后。",
+      "spacing": "株距 3–5 米，行距 5–6 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；成熟前控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；萌芽期追氮肥，膨大期追钾肥，采后施基肥。",
+      "pruning": "冬季疏剪、短截；夏季拉枝、摘心。",
+      "others": "配置授粉树；注意防治黑星病。"
+    },
+    "pests": "黑星病、轮纹病、锈病、蚜虫、梨小食心虫、红蜘蛛。"
+  },
+  {
+    "id": "peach",
+    "name": "桃",
+    "category": "tree",
+    "icon": "🍑",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、微酸性",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 5–9 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴，施足底肥，栽后浇水、定干。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，树干培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除直立旺枝、病虫枝，培养开心形。"
+      },
+      {
+        "time": "3月（萌芽前）",
+        "action": "喷施石硫合剂清园。"
+      },
+      {
+        "time": "4月–5月",
+        "action": "花期辅助授粉；疏花疏果，长果枝留 3–4 个果。"
+      },
+      {
+        "time": "5月–6月",
+        "action": "果实硬核期追施钾肥；套袋防虫。"
+      },
+      {
+        "time": "5月–9月",
+        "action": "果实着色成熟时分批采收。"
+      }
+    ],
+    "management": {
+      "thinning": "桃以定植密度控制为主。",
+      "transplant": "选择健壮嫁接苗，春栽萌芽前或秋栽落叶后。",
+      "spacing": "株距 3–4 米，行距 4–5 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；采前 15 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；硬核期追钾肥，采后施基肥。",
+      "pruning": "冬季疏剪、短截；夏季摘心、扭梢、疏枝。",
+      "others": "注意排水防涝；桃流胶病防治。"
+    },
+    "pests": "褐腐病、疮痂病、流胶病、蚜虫、桃小食心虫、红蜘蛛。"
+  },
+  {
+    "id": "plum",
+    "name": "李子",
+    "category": "tree",
+    "icon": "🍑",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 6–9 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴，施足底肥，栽后浇透水。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，幼树培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养开心形。"
+      },
+      {
+        "time": "3月（萌芽前）",
+        "action": "喷施石硫合剂清园。"
+      },
+      {
+        "time": "4月–5月",
+        "action": "花期放蜂或人工授粉；疏果，每果枝留 2–3 个果。"
+      },
+      {
+        "time": "6月–8月",
+        "action": "果实膨大期追施钾肥，保持土壤湿润。"
+      },
+      {
+        "time": "6月–9月",
+        "action": "果实变软、着色成熟时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "李子以定植密度控制为主。",
+      "transplant": "选择嫁接苗，春栽或秋栽。",
+      "spacing": "株距 3–4 米，行距 4–5 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；成熟前控水。",
+      "fertilizing": "底肥亩施有机肥 3000–4000 公斤；花期前后追磷钾肥，采后施基肥。",
+      "pruning": "冬季疏剪、回缩；夏季摘心、疏枝。",
+      "others": "配置授粉树；注意排水。"
+    },
+    "pests": "流胶病、穿孔病、蚜虫、李小食心虫、红蜘蛛。"
+  },
+  {
+    "id": "apricot",
+    "name": "杏",
+    "category": "tree",
+    "icon": "🍑",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      5,
+      6,
+      7
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 5–7 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴，施足底肥，栽后浇水、定干。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，树干涂白。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除直立枝、病虫枝，培养自然开心形。"
+      },
+      {
+        "time": "3月（萌芽前）",
+        "action": "喷施石硫合剂清园；追施萌芽肥。"
+      },
+      {
+        "time": "4月",
+        "action": "花期注意防霜冻，辅助授粉。"
+      },
+      {
+        "time": "5月",
+        "action": "硬核期追施钾肥，疏果。"
+      },
+      {
+        "time": "5月–7月",
+        "action": "果实变黄、微软时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "杏以定植密度控制为主。",
+      "transplant": "选择嫁接苗，春栽萌芽前或秋栽落叶后。",
+      "spacing": "株距 3–4 米，行距 4–5 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；采前控水。",
+      "fertilizing": "底肥亩施有机肥 3000 公斤；硬核期追钾肥，采后施基肥。",
+      "pruning": "冬季疏剪、短截；夏季摘心、拉枝。",
+      "others": "杏树花期早，注意防晚霜。"
+    },
+    "pests": "杏疔病、穿孔病、蚜虫、杏仁蜂、红蜘蛛。"
+  },
+  {
+    "id": "cherry",
+    "name": "樱桃",
+    "category": "tree",
+    "icon": "🍒",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      5,
+      6
+    ],
+    "difficulty": "较难",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 5–6 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖大穴，施足底肥，栽后浇透水，定干高度 70–80 厘米。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养纺锤形或丛状形。"
+      },
+      {
+        "time": "3月（萌芽前）",
+        "action": "喷施石硫合剂清园。"
+      },
+      {
+        "time": "4月",
+        "action": "花期放蜂辅助授粉；大樱桃需配置授粉树。"
+      },
+      {
+        "time": "5月",
+        "action": "硬核期追施钾肥；及时疏果。"
+      },
+      {
+        "time": "5月–6月",
+        "action": "果实变红、充分着色时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "樱桃以定植密度控制为主。",
+      "transplant": "选择健壮嫁接苗，春栽或秋栽。",
+      "spacing": "株距 3–4 米，行距 4–5 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；采前 10 天控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；萌芽前追氮肥，硬核期追钾肥。",
+      "pruning": "冬季疏剪、回缩；夏季摘心、疏枝、拉枝。",
+      "others": "大樱桃需配置授粉树；注意防鸟害。"
+    },
+    "pests": "流胶病、穿孔病、褐斑病、蚜虫、桑白蚧、红蜘蛛。"
+  },
+  {
+    "id": "jujube",
+    "name": "枣",
+    "category": "tree",
+    "icon": "🫒",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      8,
+      9,
+      10
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "耐瘠薄、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 8–10 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴，施足底肥，栽后浇水、定干。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养开心形。"
+      },
+      {
+        "time": "4月–5月",
+        "action": "萌芽后追施氮肥；花期喷水或放蜂提高坐果率。"
+      },
+      {
+        "time": "6月–7月",
+        "action": "幼果期追施磷钾肥，保持土壤湿润。"
+      },
+      {
+        "time": "7月–8月",
+        "action": "开甲（环剥）促进坐果，需视树势进行。"
+      },
+      {
+        "time": "8月–10月",
+        "action": "果实全红、果皮皱缩时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "枣树以定植密度控制为主。",
+      "transplant": "选择嫁接苗或根蘖苗，春栽或秋栽。",
+      "spacing": "株距 3–4 米，行距 5–6 米。",
+      "watering": "定植浇透水；花期适量控水；幼果期保持湿润。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤；萌芽期追氮肥，幼果期追钾肥。",
+      "pruning": "冬季疏剪、回缩；夏季摘心、疏枝。",
+      "others": "枣树耐旱耐瘠薄，盛花期开甲可提高坐果率。"
+    },
+    "pests": "枣锈病、枣疯病、桃小食心虫、枣黏虫。"
+  },
+  {
+    "id": "walnut",
+    "name": "核桃",
+    "category": "tree",
+    "icon": "🌰",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      8,
+      9,
+      10
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "深厚肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 8–10 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖大穴，施足底肥，栽后浇水、覆膜。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养主干疏层形。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "萌芽前追施氮肥；雄花膨大期补水。"
+      },
+      {
+        "time": "5月",
+        "action": "雌花期注意授粉；及时防治病虫害。"
+      },
+      {
+        "time": "6月–7月",
+        "action": "果实膨大期追施磷钾肥。"
+      },
+      {
+        "time": "8月–10月",
+        "action": "青皮开裂、坚果成熟时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "核桃以定植密度控制为主。",
+      "transplant": "选择嫁接苗，春栽或秋栽。",
+      "spacing": "株距 5–6 米，行距 6–8 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；坚果成熟前控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；萌芽期和果实膨大期追肥。",
+      "pruning": "冬季疏剪、短截；夏季摘心、疏除徒长枝。",
+      "others": "核桃有伤流现象，修剪宜在落叶后至萌芽前进行。"
+    },
+    "pests": "核桃黑斑病、炭疽病、核桃举肢蛾、云斑天牛。"
+  },
+  {
+    "id": "chestnut",
+    "name": "板栗",
+    "category": "tree",
+    "icon": "🌰",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      9,
+      10
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "深厚肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 9–10 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖大穴，施足底肥，栽后浇水。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养开心形。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "萌芽前追施氮肥；喷施石硫合剂清园。"
+      },
+      {
+        "time": "5月–6月",
+        "action": "花期放蜂或喷施硼肥提高坐果率。"
+      },
+      {
+        "time": "7月–8月",
+        "action": "果实膨大期追施钾肥，保持土壤湿润。"
+      },
+      {
+        "time": "9月–10月",
+        "action": "栗苞开裂、坚果棕褐时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "板栗以定植密度控制为主。",
+      "transplant": "选择嫁接苗，春栽或秋栽。",
+      "spacing": "株距 4–5 米，行距 5–6 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；成熟前控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；萌芽期追氮肥，膨大期追钾肥。",
+      "pruning": "冬季疏剪、回缩；夏季摘心、拉枝。",
+      "others": "板栗为异花授粉，需配置授粉树。"
+    },
+    "pests": "板栗疫病、白粉病、栗实象甲、桃蛀螟。"
+  },
+  {
+    "id": "pomegranate",
+    "name": "石榴",
+    "category": "tree",
+    "icon": "🍎",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "较少",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 8–10 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴，施足底肥，栽后浇透水、定干。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，幼树培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除根蘖、过密枝、病虫枝。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "萌芽前追施氮肥；注意防冻。"
+      },
+      {
+        "time": "5月–6月",
+        "action": "花期控水，人工授粉提高坐果率；疏花疏果。"
+      },
+      {
+        "time": "7月–8月",
+        "action": "果实膨大期追施磷钾肥，保持土壤湿润。"
+      },
+      {
+        "time": "8月–10月",
+        "action": "果皮着色、籽粒饱满时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "石榴以定植密度控制为主。",
+      "transplant": "选择健壮苗，春栽或秋栽。",
+      "spacing": "株距 2–3 米，行距 3–4 米。",
+      "watering": "定植浇透水；花期控水；果实膨大期保持湿润。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤；萌芽期追氮肥，膨大期追钾肥。",
+      "pruning": "冬季疏剪、回缩；夏季摘心、抹芽。",
+      "others": "石榴耐寒性一般，幼树需防寒。"
+    },
+    "pests": "干腐病、炭疽病、蚜虫、石榴绒蚧、桃蛀螟。"
+  },
+  {
+    "id": "kiwi",
+    "name": "猕猴桃",
+    "category": "tree",
+    "icon": "🥝",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      8,
+      9,
+      10
+    ],
+    "difficulty": "较难",
+    "sun": "半阴",
+    "water": "较多",
+    "soil": "疏松肥沃、微酸性",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 8–10 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴，施足底肥，栽后搭架，浇透水。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，基部培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养单干双臂形。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "萌芽前追施氮肥；绑蔓上架。"
+      },
+      {
+        "time": "5月",
+        "action": "花期授粉，雌雄株比例 6–8:1，可人工辅助授粉。"
+      },
+      {
+        "time": "6月–8月",
+        "action": "果实膨大期追施钾肥，保持土壤湿润；套袋防虫。"
+      },
+      {
+        "time": "8月–10月",
+        "action": "果实变软、可溶性固形物达标时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "猕猴桃以定植密度控制为主。",
+      "transplant": "选择嫁接苗，春栽或秋栽。",
+      "spacing": "株距 2–3 米，行距 3–4 米。",
+      "watering": "喜湿润，生长期保持土壤水分充足；采前控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；萌芽期追氮肥，膨大期追钾肥。",
+      "pruning": "冬季疏剪、短截；夏季摘心、绑蔓、疏枝。",
+      "others": "必须配置授粉雄株；搭架栽培，注意排水防涝。"
+    },
+    "pests": "溃疡病、褐斑病、根结线虫、蚧壳虫、红蜘蛛。"
+  },
+  {
+    "id": "grape",
+    "name": "葡萄",
+    "category": "tree",
+    "icon": "🍇",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 7–10 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植沟，施足底肥，栽后浇水、上架。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，埋土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。短梢或中长梢修剪，更新结果母枝。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "出土上架，绑蔓；萌芽前追施氮肥。"
+      },
+      {
+        "time": "5月",
+        "action": "开花前摘心、疏花序；花期控水。"
+      },
+      {
+        "time": "6月–7月",
+        "action": "果实膨大期追施钾肥，套袋防病鸟。"
+      },
+      {
+        "time": "7月–10月",
+        "action": "果实着色、糖分达标时采收。"
+      }
+    ],
+    "management": {
+      "thinning": "葡萄以定植密度控制为主。",
+      "transplant": "选择嫁接苗，春栽或秋栽。",
+      "spacing": "株距 1–1.5 米，行距 2.5–3 米。",
+      "watering": "定植浇透水；萌芽期、果实膨大期保持湿润；花期和成熟前控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；萌芽期追氮肥，膨大期追钾肥。",
+      "pruning": "冬季修剪；夏季摘心、疏梢、绑蔓、疏果。",
+      "others": "搭篱架或棚架；冬季埋土防寒。"
+    },
+    "pests": "霜霉病、白粉病、黑痘病、白腐病、蚜虫、红蜘蛛、葡萄天蛾。"
+  },
+  {
+    "id": "fig",
+    "name": "无花果",
+    "category": "tree",
+    "icon": "🌳",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "difficulty": "简单",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "疏松肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实夏秋成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖定植穴，施足底肥，栽后浇水、定干。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，幼树培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养开心形。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "萌芽前追施氮肥。"
+      },
+      {
+        "time": "5月–7月",
+        "action": "果实膨大期追施磷钾肥，保持土壤湿润。"
+      },
+      {
+        "time": "7月–10月",
+        "action": "果实变软、颜色加深时分批采收。"
+      }
+    ],
+    "management": {
+      "thinning": "无花果以定植密度控制为主。",
+      "transplant": "选择健壮苗，春栽或秋栽。",
+      "spacing": "株距 2–3 米，行距 3–4 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；成熟前控水。",
+      "fertilizing": "底肥亩施有机肥 2000 公斤；果实膨大期追施钾肥。",
+      "pruning": "冬季疏剪、回缩；夏季摘心促发夏果。",
+      "others": "无花果耐寒性一般，冬季注意防寒。"
+    },
+    "pests": "炭疽病、锈病、天牛、蚧壳虫。"
+  },
+  {
+    "id": "persimmon",
+    "name": "柿子",
+    "category": "tree",
+    "icon": "🍅",
+    "sowMonths": [],
+    "transplantMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "harvestMonths": [
+      9,
+      10,
+      11
+    ],
+    "difficulty": "中等",
+    "sun": "充足",
+    "water": "中等",
+    "soil": "深厚肥沃、排水良好",
+    "timing": "春栽 3–4 月，秋栽 10–11 月；果实 9–11 月成熟。",
+    "steps": [
+      {
+        "time": "3月下旬–4月上旬（清明前后）",
+        "action": "春栽。挖大穴，施足底肥，栽后浇水、定干。"
+      },
+      {
+        "time": "10月下旬–11月上旬（霜降前后）",
+        "action": "秋栽。浇封冻水，培土防寒。"
+      },
+      {
+        "time": "12月–次年2月",
+        "action": "冬季修剪。疏除过密枝、病虫枝，培养疏散分层形。"
+      },
+      {
+        "time": "3月–4月",
+        "action": "萌芽前追施氮肥；喷施石硫合剂清园。"
+      },
+      {
+        "time": "5月–6月",
+        "action": "花期注意授粉；疏果，每结果枝留 1–2 个果。"
+      },
+      {
+        "time": "7月–8月",
+        "action": "果实膨大期追施钾肥，保持土壤湿润。"
+      },
+      {
+        "time": "9月–11月",
+        "action": "果实转黄变软时采收，需脱涩后食用。"
+      }
+    ],
+    "management": {
+      "thinning": "柿子以定植密度控制为主。",
+      "transplant": "选择嫁接苗，春栽或秋栽。",
+      "spacing": "株距 4–5 米，行距 5–6 米。",
+      "watering": "定植浇透水；生长期保持土壤湿润；采前控水。",
+      "fertilizing": "底肥亩施有机肥 3000–5000 公斤；萌芽期追氮肥，膨大期追钾肥。",
+      "pruning": "冬季疏剪、短截；夏季摘心、拉枝。",
+      "others": "甜柿需配置授粉树；注意防治柿蒂虫。"
+    },
+    "pests": "炭疽病、角斑病、柿蒂虫、蚧壳虫、红蜘蛛。"
+  }
+];
+
+    const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const categoryLabels = { leaf: '叶菜', fruit: '瓜果', root: '根茎', bean: '豆类', tree: '果树', herb: '香草', other: '其他' };
+    const mgmtLabels = {
+      thinning: '间苗定苗',
+      transplant: '移栽定植',
+      spacing: '株行距',
+      watering: '浇水排水',
+      fertilizing: '施肥要点',
+      pruning: '整枝修剪',
+      others: '其他要点'
+    };
+
+    const searchInput = document.getElementById('searchInput');
+    const categorySelect = document.getElementById('categorySelect');
+    const actionSelect = document.getElementById('actionSelect');
+    const monthTabs = document.getElementById('monthTabs');
+    const vegetableGrid = document.getElementById('vegetableGrid');
+    const listTitle = document.getElementById('listTitle');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSummary = document.getElementById('modalSummary');
+    const modalMeta = document.getElementById('modalMeta');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+
+    let activeMonth = null;
+
+    function monthList(arr) {
+      return arr.map(m => monthNames[m-1]).join('、') || '—';
+    }
+
+    function matchesFilter(v) {
+      const q = searchInput.value.trim();
+      if (q && !v.name.includes(q) && !v.id.includes(q.toLowerCase())) return false;
+      const cat = categorySelect.value;
+      if (cat !== 'all' && v.category !== cat) return false;
+      const act = actionSelect.value;
+      if (activeMonth !== null) {
+        const key = act === 'sow' ? 'sowMonths' : act === 'transplant' ? 'transplantMonths' : act === 'harvest' ? 'harvestMonths' : null;
+        if (key) {
+          if (!v[key].includes(activeMonth)) return false;
+        } else {
+          if (!v.sowMonths.includes(activeMonth) && !v.transplantMonths.includes(activeMonth) && !v.harvestMonths.includes(activeMonth)) return false;
+        }
+      }
+      return true;
+    }
+
+    function renderCard(v) {
+      return `
+        <div class="veg-card" data-id="${v.id}" onclick="openModal('${v.id}')">
+          <div class="veg-header">
+            <div class="veg-icon">${v.icon}</div>
+            <div class="veg-name">${v.name}</div>
+          </div>
+          <div class="veg-meta">
+            <span class="tag">${categoryLabels[v.category] || v.category}</span>
+            <span class="tag">${v.difficulty}</span>
+            <span class="tag">${v.sun}</span>
+            <span class="tag">${v.water}</span>
+          </div>
+          <div class="veg-months">
+            <div>🌱 播种：${monthList(v.sowMonths)}</div>
+            <div>🚜 移栽：${monthList(v.transplantMonths)}</div>
+            <div>🧺 采收：${monthList(v.harvestMonths)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function render() {
+      const filtered = vegetables.filter(matchesFilter);
+      vegetableGrid.innerHTML = filtered.length
+        ? filtered.map(renderCard).join('')
+        : '<div class="empty">没有找到符合条件的作物，换个筛选条件试试。</div>';
+      if (activeMonth !== null) {
+        listTitle.textContent = `📅 ${monthNames[activeMonth-1]}农事（共 ${filtered.length} 种）`;
+      } else {
+        listTitle.textContent = `📅 全部作物（共 ${filtered.length} 种）`;
+      }
+    }
+
+    function renderMonthTabs() {
+      monthTabs.innerHTML = monthNames.map((name, i) => {
+        const m = i + 1;
+        const active = activeMonth === m ? 'active' : '';
+        return `<button class="month-tab ${active}" data-month="${m}">${name}</button>`;
+      }).join('');
+      monthTabs.querySelectorAll('.month-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const m = parseInt(btn.dataset.month, 10);
+          activeMonth = activeMonth === m ? null : m;
+          renderMonthTabs();
+          render();
+        });
+      });
+    }
+
+    function openModal(id) {
+      const v = vegetables.find(x => x.id === id);
+      if (!v) return;
+      modalTitle.innerHTML = v.icon + ' ' + v.name;
+      modalSummary.textContent = v.timing;
+      modalMeta.innerHTML = `
+        <div><strong>类型</strong>${categoryLabels[v.category] || v.category}</div>
+        <div><strong>难度</strong>${v.difficulty}</div>
+        <div><strong>光照</strong>${v.sun}</div>
+        <div><strong>水分</strong>${v.water}</div>
+        <div><strong>土壤</strong>${v.soil}</div>
+        <div><strong>播种</strong>${monthList(v.sowMonths)}</div>
+        <div><strong>移栽</strong>${monthList(v.transplantMonths)}</div>
+        <div><strong>采收</strong>${monthList(v.harvestMonths)}</div>
+      `;
+      const stepsHtml = v.steps.map(s => `
+        <div class="timeline-item">
+          <div class="timeline-time">${s.time}</div>
+          <div class="timeline-action">${s.action}</div>
+        </div>
+      `).join('');
+      const mgmtRows = Object.keys(mgmtLabels).map(k => {
+        const val = v.management[k];
+        return val ? `<tr><th>${mgmtLabels[k]}</th><td>${val}</td></tr>` : '';
+      }).join('');
+      modalBody.innerHTML = `
+        <div class="info-block">
+          <h3>🗓️ 种植步骤</h3>
+          <div class="timeline">${stepsHtml}</div>
+        </div>
+        <div class="info-block">
+          <h3>🛠️ 管理方法</h3>
+          <table class="mgmt-table">${mgmtRows}</table>
+        </div>
+        <div class="info-block">
+          <h3>🐛 病虫害防治</h3>
+          <p>${v.pests}</p>
+        </div>
+      `;
+      modalOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    searchInput.addEventListener('input', render);
+    categorySelect.addEventListener('change', render);
+    actionSelect.addEventListener('change', render);
+    modalClose.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    renderMonthTabs();
+    render();
+  </script>
+</body>
+</html>
